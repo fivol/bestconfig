@@ -22,8 +22,27 @@ class Config:
     print(config.limit)
     """
 
-    def __init__(self):
+    def __new__(cls, *args, raise_on_absent=False):
         pass
+
+
+class ConfigProvider:
+    """
+    Основной класс, с которым имеет дело пользователь
+    после создания конфига.
+    Предоставляет универсальный интерфейс для хранящихся данных
+    Пример:
+    config = Config()
+    assert isinstance(config, ConfigProvider)
+    print(config.logger.format)
+    print(config['logger.format'])
+    print(config['logger']['format'])
+    print(config.logger['format'])
+    print(config.get('logger'))
+
+    """
+    def __init__(self, data_dict: dict):
+        self._data = data_dict
 
 
 class ConfigFileAdapter:
@@ -32,6 +51,13 @@ class ConfigFileAdapter:
     парсинг, модификация, доступ к полям и прочее
     """
     pass
+
+
+class FilesScanner:
+    """
+    Задача класса находить файлы конфигурации
+    в директориях проекта
+    """
 
 
 class FileIOException(Exception):
@@ -86,6 +112,7 @@ class YamlParser(AbstractFormatParser):
 
 
 class JsonParser(AbstractFormatParser):
+    """Парсит файлы с расширением .json"""
     extension = 'json'
 
     @classmethod
