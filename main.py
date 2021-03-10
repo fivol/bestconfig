@@ -1,5 +1,22 @@
+import os
 from abc import abstractmethod, ABCMeta
 import typing as t
+from pathlib import Path
+
+supported_extensions = ['json', 'yaml', 'ini', 'cfg']
+applicant_files = ['config', 'conf', 'setting', 'settings', 'configuration']
+
+
+def generate_sources(files: t.List[str], extensions: t.List[str]) -> t.List[str]:
+    """Генерирует всевозможные названия файлов
+    на основе предоставленных претендентов на названия и расширения"""
+    return list(sum(
+        [
+            [f'{filename}.{ext}' for ext in extensions]
+            for filename in files
+        ],
+        []
+    ))
 
 
 class Source:
@@ -9,6 +26,9 @@ class Source:
      TODO: Дописать примеры использования
      """
     env = '__ENV__'
+
+    def __init__(self, filename: str):
+        pass
 
 
 class Config:
@@ -23,8 +43,12 @@ class Config:
     print(config.limit)
     """
 
-    def __new__(cls, *args, exclude_default=False, raise_on_absent=False):
+    def __new__(cls, *args, exclude_default=False, raise_on_absent=False, exclude_files: list = None):
         pass
+
+    """Начало и конец списка источников конфигов"""
+    _sources_end = [Source.env]
+    _sources_begin = generate_sources(applicant_files, supported_extensions)
 
 
 """Тип, которым может быть значение конфига"""
@@ -48,6 +72,7 @@ class ConfigProvider:
 
     def __init__(self, data: dict):
         self._data: dict = data
+        self._modified: bool = False
 
     @classmethod
     def _create_object(cls, data: dict):
@@ -64,18 +89,33 @@ class ConfigProvider:
         """
         Обращается к self._data и возвращает собственный экземпляр, если значение dict
         в противном случае само значение
+
+        attr_name = config.get('attr_name', 123)
         """
         if item in self._data:
-            return self._data['item']
+            return self.__new__(self.__class__, self._data['item'])
+
         if raise_absent:
             raise KeyError
+
         return default_value
 
     def __getattr__(self, item):
-        pass
+        """
+        attr_name = config.attr_name
+        """
+        return self.get(item)
 
     def __getitem__(self, item):
+        """
+        attr_name = config['attr_name']
+        """
         return ConfigProvider(self._data[''])
+
+    def set(self, item: str, value: ConfigType):
+        """Устанавливает значение по ключу"""
+        self._modified = True
+        self._data[item] = value
 
 
 class ConfigFileAdapter:
@@ -91,6 +131,13 @@ class FilesScanner:
     Задача класса находить файлы конфигурации
     в директориях проекта
     """
+
+    def __init__(self, caller_path):
+        self._root_path = Path(os.getcwd())
+        self._caller_path = caller_path
+
+    def find_file(self, filename: str) -> t.Optional[Path]:
+        return
 
 
 class FileIOException(Exception):
@@ -155,3 +202,7 @@ class JsonParser(AbstractFileParser):
     @classmethod
     def write(cls, filepath: str, data: dict) -> None:
         pass
+
+
+if __name__ == '__main__':
+    config = Config('file')
