@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABCMeta
+import typing as t
 
 
 class Source:
@@ -22,8 +23,12 @@ class Config:
     print(config.limit)
     """
 
-    def __new__(cls, *args, raise_on_absent=False):
+    def __new__(cls, *args, exclude_default=False, raise_on_absent=False):
         pass
+
+
+"""Тип, которым может быть значение конфига"""
+ConfigType = t.Union[str, int, float, bool, dict, list]
 
 
 class ConfigProvider:
@@ -39,10 +44,38 @@ class ConfigProvider:
     print(config['logger']['format'])
     print(config.logger['format'])
     print(config.get('logger'))
-
     """
-    def __init__(self, data_dict: dict):
-        self._data = data_dict
+
+    def __init__(self, data: dict):
+        self._data: dict = data
+
+    @classmethod
+    def _create_object(cls, data: dict):
+        obj = object.__new__(cls)
+        obj.__init__(data)
+        return obj
+
+    def __new__(cls, data: ConfigType):
+        if isinstance(data, dict):
+            return cls._create_object(data)
+        return data
+
+    def get(self, item, default_value=None, raise_absent=False) -> ConfigType:
+        """
+        Обращается к self._data и возвращает собственный экземпляр, если значение dict
+        в противном случае само значение
+        """
+        if item in self._data:
+            return self._data['item']
+        if raise_absent:
+            raise KeyError
+        return default_value
+
+    def __getattr__(self, item):
+        pass
+
+    def __getitem__(self, item):
+        return ConfigProvider(self._data[''])
 
 
 class ConfigFileAdapter:
@@ -65,7 +98,7 @@ class FileIOException(Exception):
     pass
 
 
-class AbstractFormatParser:
+class AbstractFileParser:
     """
     Родительский класс для парсеров конфигов различных форматов
     """
@@ -98,7 +131,7 @@ class AbstractFormatParser:
         """
 
 
-class YamlParser(AbstractFormatParser):
+class YamlParser(AbstractFileParser):
     """Парсит файлы с расширением .yaml"""
     extension = 'yaml'
 
@@ -111,7 +144,7 @@ class YamlParser(AbstractFormatParser):
         pass
 
 
-class JsonParser(AbstractFormatParser):
+class JsonParser(AbstractFileParser):
     """Парсит файлы с расширением .json"""
     extension = 'json'
 
