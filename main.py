@@ -77,8 +77,12 @@ class Config:
     """
 
     def __new__(cls, *args, exclude_default=False, raise_on_absent=False, exclude: list = None):
-
         sources = cls._get_sources(*args, exclude_default=exclude_default, exclude=exclude)
+        # Передаем файл, из которого был совершен вызов Config()
+        # в объекте traceback.extract_stack, последний вызов это данная функция, а перед ним, вызывающая
+        caller_path = traceback.extract_stack()[-2][0]
+        sources = SourcesFilter.filter(sources, caller_path=caller_path)
+        return
 
     """Начало и конец списка источников конфигов, те, что ближе к концу 
     кри коллизии перезаписывают более ранние"""
@@ -87,6 +91,7 @@ class Config:
 
     @classmethod
     def _get_sources(cls, *args, exclude_default, exclude: list) -> t.List[Source]:
+        """Дополняет переданные пользователем источники (файлы) стандартными"""
         exclude_set = set(exclude)
         sources = []
         if not exclude_default:
@@ -165,13 +170,32 @@ class ConfigProvider:
         self._data[item] = value
 
 
+class SourcesFilter:
+    """Делает preprocessing входных источников,
+    превращает их в реальные пути к файлам, удаляет невалид и прочее"""
+
+    @classmethod
+    def filter(cls, sources: t.List[Source], caller_path: str) -> t.List[Source]:
+        """Основной метод класса
+        Заменяет названия файлов на реальные пути в формате Path"""
+        clear_sources = []
+        scanner = FilesScanner(caller_path=caller_path)
+        for source in sources:
+            if SourceType.FILE == source.source_type:
+                clear_sources += scanner.find_all_files(source.data['filename'])
+            else:
+                clear_sources.append(source)
+
+        return clear_sources
+
+
 class FilesScanner:
     """
     Задача класса находить файлы конфигурации
     в директориях проекта
     """
 
-    def __init__(self, caller_path: str, sources):
+    def __init__(self, caller_path: str):
         self._root_path = Path(os.getcwd())
         self._caller_path = caller_path
 
@@ -181,6 +205,36 @@ class FilesScanner:
         и возвращает список подходящих в порядке
         более глубокой вложенности
         """
+        paths = []
+        depth_limit = 4
+        curr_dirname = Path(self._caller_path)
+        for i in range(depth_limit):
+            path = self._get_path(str(curr_dirname), filename)
+            if path:
+                paths.append(path)
+            if curr_dirname == self._root_path:
+                break
+
+            curr_dirname = curr_dirname.parent
+
+        # Самый последний, наиболее глубокий в файловой структуре
+        return paths[::-1]
+
+    @classmethod
+    def _get_path(cls, dir_path: str, filename: str) -> t.Optional[Path]:
+        """Проверяет в данной директории наличие файла
+        по паттерну filename, возвращает None при отсутствии
+        и Path() если существует"""
+        dir_path = Path(dir_path)
+        if not dir_path.exists():
+            return None
+        files = os.listdir(dir_path)
+        for file in files:
+            filepath = os.path.join(dir_path, file)
+            if filename in filepath:
+                return Path(filepath)
+
+        return None
 
 
 class FileIOException(Exception):
@@ -202,8 +256,16 @@ class EnvAdapter(AbstractAdapter):
     """Адаптер для доступа к переменным окружения"""
 
     @classmethod
-    def get_dict(cls):
-        return os.environ
+    def get_dict(cls, source: Source) -> dict:
+        return dict(os.environ)
+
+
+class DictAdapter(AbstractAdapter):
+    """Получение конфига из python dict"""
+
+    @classmethod
+    def get_dict(cls, source: Source) -> dict:
+        return source.data
 
 
 class AbstractFileParser(metaclass=ABCMeta):
@@ -298,7 +360,8 @@ class ConfigSourceAdapter:
 
     _adapters_dict = {
         SourceType.ENV: EnvAdapter,
-        SourceType.FILE: FileAdapter
+        SourceType.FILE: FileAdapter,
+        SourceType.DICT: DictAdapter
     }
 
 
