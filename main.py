@@ -6,6 +6,7 @@ from enum import Enum, auto
 from pathlib import Path
 import json
 import yaml
+from environs import Env
 
 supported_extensions = ['json', 'yaml', 'ini', 'cfg']
 applicant_files = ['config', 'conf', 'setting', 'settings', 'configuration']
@@ -26,6 +27,7 @@ def generate_sources(files: t.List[str], extensions: t.List[str]) -> t.List[str]
 class SourceType(Enum):
     """Тип переданного в Config() источника """
     ENV = auto()
+    DICT = auto()
     FILE = auto()
 
 
@@ -45,14 +47,19 @@ class Source:
         """
         # TODO точка роста, сюда можно добавить другие источники
 
-        self.filename: t.Optional[str] = ''
-        self.filepath: t.Optional[Path] = None
+        # dict в котором хранятся данные, характеризующие источник
+        self.data = {}
 
         if value == self.env:
             self.source_type = SourceType.ENV
-        else:
+        elif isinstance(value, dict):
+            self.source_type = SourceType.DICT
+            self.data = value
+        elif isinstance(value, str):
             self.source_type = SourceType.FILE
-            self.filename = value
+            self.data['filename'] = value
+        else:
+            raise ValueError('Unknown source type %s' % type(value))
 
         self.manual = manual
 
@@ -76,7 +83,7 @@ class Config:
     """Начало и конец списка источников конфигов, те, что ближе к концу 
     кри коллизии перезаписывают более ранние"""
     _sources_begin = generate_sources(applicant_files, supported_extensions)
-    _sources_end = [Source.env]
+    _sources_end = ['.env', 'env_file', Source.env]
 
     @classmethod
     def _get_sources(cls, *args, exclude_default, exclude: list) -> t.List[Source]:
@@ -168,8 +175,12 @@ class FilesScanner:
         self._root_path = Path(os.getcwd())
         self._caller_path = caller_path
 
-    def find_file(self, filename: str) -> t.Optional[Path]:
-        """Ищет файл и, если существует, возвращает полный путь"""
+    def find_all_files(self, filename: str) -> t.List[Path]:
+        """
+        Принимает название или часть названия файла
+        и возвращает список подходящих в порядке
+        более глубокой вложенности
+        """
 
 
 class FileIOException(Exception):
@@ -185,7 +196,6 @@ class AbstractAdapter(metaclass=ABCMeta):
         """Возвращает словарь с конфигами,
         необходимые параметры находятся в source"""
         pass
-
 
 
 class EnvAdapter(AbstractAdapter):
@@ -238,13 +248,34 @@ class JsonParser(AbstractFileParser):
             return json.load(file)
 
 
+class EnvParser(AbstractFileParser):
+    """Читает .env файлы и подобные ему
+    Файл должен быть в формате VAR_NAME=VAR_VALUE"""
+
+    extension = 'env'
+
+    @classmethod
+    def read(cls, filepath: str) -> dict:
+        with open(filepath, 'r') as file:
+            return yaml.load(file)
+
+
 class FileAdapter(AbstractAdapter):
     """Читает и пишет в файл"""
 
     @classmethod
     def get_dict(cls, source: Source) -> dict:
-        pass
+        filepath = source.data.get('filepath')
+        assert isinstance(filepath, Path)
+        _, extension = os.path.splitext(filepath)
+        filename = os.path.basename(filepath)
+        if extension in cls.specific_parsers:
+            parser = cls.specific_parsers[extension]
+        else:
+            raise NotImplementedError('This file type does not supported yet %s' % filename)
+        return parser.read(str(filepath))
 
+    # TODO добавить .env .cfg .ini
     specific_parsers = {
         'json': JsonParser,
         'yaml': YamlParser,
