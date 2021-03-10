@@ -20,6 +20,13 @@ from bestconfig import Config
 
 config = Config("myconfig.json")
 print(dict(config))
+# Примеры использования класса
+logger = config.logger
+logger = config['logger']
+mode = config.logger.mode
+mode = config.get('logger.mode', 'DEBUG')
+mode = config['__unknown__'] # raise KeyError
+mode = config.get('__unknown__') # return None
 ```
 Содержимое файлов:
 
@@ -82,6 +89,15 @@ logger:
     - `env_file`
     - `.env`
     - `config.py`
+  
+## Доступ к данным
+1. Через точку `config.name`
+1. Нотация `python dict` `config['name']`
+Бросает исключение при отсутствии
+1. `config.get('name', 'default_value', raise_absent=False)`   
+
+**Если после документации остались вопросы, 
+код подробно документирован, можно смело смотреть в исходники**
 
 ## Запланированные обновления
 - Поддержка загрузки из базы данных
