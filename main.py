@@ -1,7 +1,11 @@
 import os
+import traceback
 from abc import abstractmethod, ABCMeta
 import typing as t
+from enum import Enum, auto
 from pathlib import Path
+import json
+import yaml
 
 supported_extensions = ['json', 'yaml', 'ini', 'cfg']
 applicant_files = ['config', 'conf', 'setting', 'settings', 'configuration']
@@ -19,6 +23,12 @@ def generate_sources(files: t.List[str], extensions: t.List[str]) -> t.List[str]
     ))
 
 
+class SourceType(Enum):
+    """Тип переданного в Config() источника """
+    ENV = auto()
+    FILE = auto()
+
+
 class Source:
     """Класс обертка над источникоми конфигов,
     например:
@@ -27,8 +37,24 @@ class Source:
      """
     env = '__ENV__'
 
-    def __init__(self, filename: str):
-        pass
+    def __init__(self, value, manual=False):
+        """
+        :param value:
+        :param manual: True, если данный источник указал пользователь вручную
+        False, если взято из настроек по умолчанию
+        """
+        # TODO точка роста, сюда можно добавить другие источники
+
+        self.filename: t.Optional[str] = ''
+        self.filepath: t.Optional[Path] = None
+
+        if value == self.env:
+            self.source_type = SourceType.ENV
+        else:
+            self.source_type = SourceType.FILE
+            self.filename = value
+
+        self.manual = manual
 
 
 class Config:
@@ -43,12 +69,26 @@ class Config:
     print(config.limit)
     """
 
-    def __new__(cls, *args, exclude_default=False, raise_on_absent=False, exclude_files: list = None):
-        pass
+    def __new__(cls, *args, exclude_default=False, raise_on_absent=False, exclude: list = None):
 
-    """Начало и конец списка источников конфигов"""
-    _sources_end = [Source.env]
+        sources = cls._get_sources(*args, exclude_default=exclude_default, exclude=exclude)
+
+    """Начало и конец списка источников конфигов, те, что ближе к концу 
+    кри коллизии перезаписывают более ранние"""
     _sources_begin = generate_sources(applicant_files, supported_extensions)
+    _sources_end = [Source.env]
+
+    @classmethod
+    def _get_sources(cls, *args, exclude_default, exclude: list) -> t.List[Source]:
+        exclude_set = set(exclude)
+        sources = []
+        if not exclude_default:
+            sources += [source_name for source_name in cls._sources_begin if source_name not in exclude_set]
+        sources += args
+        if not exclude_default:
+            sources += [source_name for source_name in cls._sources_end if source_name not in exclude_set]
+
+        return [Source(source) for source in sources]
 
 
 """Тип, которым может быть значение конфига"""
@@ -118,26 +158,18 @@ class ConfigProvider:
         self._data[item] = value
 
 
-class ConfigFileAdapter:
-    """
-    Отражает реальный файл конфига, предоставляет ряд методов для работы с ним:
-    парсинг, модификация, доступ к полям и прочее
-    """
-    pass
-
-
 class FilesScanner:
     """
     Задача класса находить файлы конфигурации
     в директориях проекта
     """
 
-    def __init__(self, caller_path):
+    def __init__(self, caller_path: str, sources):
         self._root_path = Path(os.getcwd())
         self._caller_path = caller_path
 
     def find_file(self, filename: str) -> t.Optional[Path]:
-        return
+        """Ищет файл и, если существует, возвращает полный путь"""
 
 
 class FileIOException(Exception):
@@ -145,11 +177,29 @@ class FileIOException(Exception):
     pass
 
 
-class AbstractFileParser:
+class AbstractAdapter(metaclass=ABCMeta):
+
+    @classmethod
+    @abstractmethod
+    def get_dict(cls, source: Source) -> dict:
+        """Возвращает словарь с конфигами,
+        необходимые параметры находятся в source"""
+        pass
+
+
+
+class EnvAdapter(AbstractAdapter):
+    """Адаптер для доступа к переменным окружения"""
+
+    @classmethod
+    def get_dict(cls):
+        return os.environ
+
+
+class AbstractFileParser(metaclass=ABCMeta):
     """
     Родительский класс для парсеров конфигов различных форматов
     """
-    __metaclass__ = ABCMeta
 
     """
     Расширение файла, которое обрабатывает данный класс,
@@ -167,16 +217,6 @@ class AbstractFileParser:
         """
         pass
 
-    @classmethod
-    @abstractmethod
-    def write(cls, filepath: str, data: dict) -> None:
-        """
-        Записывает dict в файл соответствующего типа
-        :param filepath: полный путь до файла
-        :param data: python dict, который нужно записать в файл
-        :return: Может кидать ошибку FileIOException при ошибки записи
-        """
-
 
 class YamlParser(AbstractFileParser):
     """Парсит файлы с расширением .yaml"""
@@ -184,11 +224,8 @@ class YamlParser(AbstractFileParser):
 
     @classmethod
     def read(cls, filepath: str) -> dict:
-        pass
-
-    @classmethod
-    def write(cls, filepath: str, data: dict) -> None:
-        pass
+        with open(filepath, 'r') as file:
+            return yaml.load(file)
 
 
 class JsonParser(AbstractFileParser):
@@ -197,11 +234,41 @@ class JsonParser(AbstractFileParser):
 
     @classmethod
     def read(cls, filepath: str) -> dict:
-        pass
+        with open(filepath, 'r') as file:
+            return json.load(file)
+
+
+class FileAdapter(AbstractAdapter):
+    """Читает и пишет в файл"""
 
     @classmethod
-    def write(cls, filepath: str, data: dict) -> None:
+    def get_dict(cls, source: Source) -> dict:
         pass
+
+    specific_parsers = {
+        'json': JsonParser,
+        'yaml': YamlParser,
+    }
+
+
+class ConfigSourceAdapter:
+    """
+    Предоставляет ряд универсальных методов для работы с источником конфига.
+    Инкапсулирует реальный доступ к источнику
+    Парсинг, модификация, доступ к полям и прочее
+    """
+
+    def __init__(self, source: Source):
+        self._source = source
+        self._adapter = self._adapters_dict[source.source_type]
+
+    def get_dict(self):
+        return self._adapter.get_dict(self._source)
+
+    _adapters_dict = {
+        SourceType.ENV: EnvAdapter,
+        SourceType.FILE: FileAdapter
+    }
 
 
 if __name__ == '__main__':
