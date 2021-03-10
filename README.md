@@ -14,7 +14,7 @@ root/
     config.yaml
     .env
 ```
-`/app/app.py`
+`/main.py`
 ```python
 from bestconfig import Config
 
@@ -63,7 +63,28 @@ logger:
   - `.json`
   - `.yaml`
   - `.ini`
-  - `.py`
+  - `.py` (если в нем нет инициализации `Config()` во избежании рекурсии)
+  - `.cfg`
 - Файлы в формате `CONFIG_NAME=CONFIG_VALUE`
 - Уже существующие и новые переменные окружения
 - Обычные `python` словари
+
+
+### Файлы для поиска по умолчанию
+- Все комбинации имени
+  
+  `config` `configuration` `settings` `conf`
+  
+  и расширений
+  
+  `.json` `.yaml` `.ini` `.env` `.cfg`
+- Выеденные, часто используемые названия
+    - `env_file`
+    - `.env`
+    - `config.py`
+
+## Запланированные обновления
+- Поддержка загрузки из базы данных
+- Поддержка загрузки с config сервера
+
+
