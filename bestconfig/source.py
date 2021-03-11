@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from pathlib import Path
 
 
 class SourceType(Enum):
@@ -35,7 +36,13 @@ class Source:
         elif isinstance(value, str):
             self.source_type = SourceType.FILE
             self.data['filename'] = value
+        elif isinstance(value, Path):
+            self.source_type = SourceType.FILE
+            self.data['filepath'] = value
         else:
             raise ValueError('Unknown source type %s' % type(value))
 
         self.manual = manual
+
+    def __repr__(self):
+        return f'Source({self.data})' if self.data else f'Source(type={self.source_type})'
