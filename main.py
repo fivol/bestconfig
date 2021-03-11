@@ -1,4 +1,5 @@
 import os
+import re
 import traceback
 from abc import abstractmethod, ABCMeta
 import typing as t
@@ -7,8 +8,9 @@ from pathlib import Path
 import json
 import yaml
 from environs import Env
+import configparser
 
-supported_extensions = ['json', 'yaml', 'ini', 'cfg']
+supported_extensions = ['json', 'yaml', 'ini', 'cfg', 'env']
 applicant_files = ['config', 'conf', 'setting', 'settings', 'configuration']
 
 
@@ -62,45 +64,6 @@ class Source:
             raise ValueError('Unknown source type %s' % type(value))
 
         self.manual = manual
-
-
-class Config:
-    """
-    Основной класс, является частью публичного
-    интерфейса библиотеки.
-
-    Пример использования:
-
-    from bestconfig import Config
-    config = Config()
-    print(config.limit)
-    """
-
-    def __new__(cls, *args, exclude_default=False, raise_on_absent=False, exclude: list = None):
-        sources = cls._get_sources(*args, exclude_default=exclude_default, exclude=exclude)
-        # Передаем файл, из которого был совершен вызов Config()
-        # в объекте traceback.extract_stack, последний вызов это данная функция, а перед ним, вызывающая
-        caller_path = traceback.extract_stack()[-2][0]
-        sources = SourcesFilter.filter(sources, caller_path=caller_path)
-        return
-
-    """Начало и конец списка источников конфигов, те, что ближе к концу 
-    кри коллизии перезаписывают более ранние"""
-    _sources_begin = generate_sources(applicant_files, supported_extensions)
-    _sources_end = ['.env', 'env_file', Source.env]
-
-    @classmethod
-    def _get_sources(cls, *args, exclude_default, exclude: list) -> t.List[Source]:
-        """Дополняет переданные пользователем источники (файлы) стандартными"""
-        exclude_set = set(exclude)
-        sources = []
-        if not exclude_default:
-            sources += [source_name for source_name in cls._sources_begin if source_name not in exclude_set]
-        sources += args
-        if not exclude_default:
-            sources += [source_name for source_name in cls._sources_end if source_name not in exclude_set]
-
-        return [Source(source) for source in sources]
 
 
 """Тип, которым может быть значение конфига"""
@@ -169,6 +132,75 @@ class ConfigProvider:
         self._modified = True
         self._data[item] = value
 
+    # TODO добавить cast к различным типам
+
+
+class Config:
+    """
+    Основной класс, является частью публичного
+    интерфейса библиотеки.
+
+    Пример использования:
+
+    from bestconfig import Config
+    config = Config()
+    print(config.limit)
+    """
+
+    def __new__(cls, *args, exclude_default=False, raise_on_absent=False, exclude: list = None) -> ConfigProvider:
+        # Добавить значения по умолчанию
+        sources = cls._get_sources(*args, exclude_default=exclude_default, exclude=exclude or set())
+        # Передаем файл, из которого был совершен вызов Config()
+        # в объекте traceback.extract_stack, последний вызов это данная функция, а перед ним, вызывающая
+        caller_path = traceback.extract_stack()[-2][0]
+        sources = SourcesFilter.filter(sources, caller_path=caller_path)
+        aggregator = ConfigAggregator(sources)
+        return ConfigProvider(aggregator.to_dict())
+
+    """Начало и конец списка источников конфигов, те, что ближе к концу 
+    кри коллизии перезаписывают более ранние"""
+    _sources_begin = generate_sources(applicant_files, supported_extensions)
+    _sources_end = ['.env', 'env_file', Source.env]
+
+    @classmethod
+    def _get_sources(cls, *args, exclude_default, exclude: list) -> t.List[Source]:
+        """Дополняет переданные пользователем источники (файлы) стандартными"""
+        exclude_set = set(exclude)
+        sources = []
+        if not exclude_default:
+            sources += [source_name for source_name in cls._sources_begin if source_name not in exclude_set]
+        sources += args
+        if not exclude_default:
+            sources += [source_name for source_name in cls._sources_end if source_name not in exclude_set]
+
+        return [Source(source) for source in sources]
+
+
+class ConfigAggregator:
+    """Превращает сырые словари из файлов и других источников
+     в итоговый набор конфигов для пользования"""
+
+    def __init__(self, source: t.List[Source]):
+        self._sources = source
+
+    def to_dict(self) -> dict:
+        """Возвращает готовый итоговый словарь, содержащий
+        все необходимые данные (переменные конфигурации)"""
+
+    @classmethod
+    def _extract_source(cls, source) -> dict:
+        """Возвращает соответствующий источнику словарь данных"""
+        adapter = ConfigSourceAdapter(source)
+        return adapter.get_dict()
+
+    def combine_sources(self) -> dict:
+        """Возвращает общий для всех источников словарь"""
+        data = {}
+        for source in self._sources:
+            data.update(self._extract_source(source))
+
+        return data
+
 
 class SourcesFilter:
     """Делает preprocessing входных источников,
@@ -207,7 +239,8 @@ class FilesScanner:
         """
         paths = []
         depth_limit = 4
-        curr_dirname = Path(self._caller_path)
+        curr_dirname = os.path.dirname(self._caller_path)
+        curr_dirname = Path(curr_dirname)
         for i in range(depth_limit):
             path = self._get_path(str(curr_dirname), filename)
             if path:
@@ -310,16 +343,40 @@ class JsonParser(AbstractFileParser):
             return json.load(file)
 
 
+class IniParser(AbstractFileParser):
+    """Основана на configparser (https://docs.python.org/3/library/configparser.html)
+    Считывает файл и предоставляет словарь с ключами - секциями"""
+    extension = 'ini'
+
+    @classmethod
+    def read(cls, filepath: str) -> dict:
+        # TODO протестировать
+        parser = configparser.ConfigParser()
+        parser.read(filepath)
+        return dict(parser)
+
+
 class EnvParser(AbstractFileParser):
-    """Читает .env файлы и подобные ему
+    """Читает .env файлы и подобные ему.
     Файл должен быть в формате VAR_NAME=VAR_VALUE"""
 
     extension = 'env'
 
     @classmethod
     def read(cls, filepath: str) -> dict:
-        with open(filepath, 'r') as file:
-            return yaml.load(file)
+        """
+        Считывает файл в формате VAR=VALUE в словарь
+        Пропускает одинарные и двойные кавычки
+        Пропускает комментарии
+        """
+        template = re.compile(r'''^([^\s=]+)=(?:[\s"']*)(.+?)(?:[\s"']*)$''')
+        result = {}
+        with open(filepath, 'r') as ins:
+            for line in ins:
+                match = template.match(line)
+                if match is not None:
+                    result[match.group(1)] = match.group(2)
+        return result
 
 
 class FileAdapter(AbstractAdapter):
@@ -341,6 +398,7 @@ class FileAdapter(AbstractAdapter):
     specific_parsers = {
         'json': JsonParser,
         'yaml': YamlParser,
+        'ini': IniParser
     }
 
 
@@ -355,7 +413,7 @@ class ConfigSourceAdapter:
         self._source = source
         self._adapter = self._adapters_dict[source.source_type]
 
-    def get_dict(self):
+    def get_dict(self) -> dict:
         return self._adapter.get_dict(self._source)
 
     _adapters_dict = {
@@ -367,3 +425,4 @@ class ConfigSourceAdapter:
 
 if __name__ == '__main__':
     config = Config('file')
+    print(config.to)
