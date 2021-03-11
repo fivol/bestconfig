@@ -25,3 +25,8 @@ def test_contains_configs(config):
 def test_all_sources_config(config):
     assert config.AA == '_12'
     assert config.get('ENV_NAME') == 'ENV_VALUE'
+    assert isinstance(config.messages_limit, int)
+    assert isinstance(config.logger, ConfigProvider)
+    assert config.logger.format.endswith('s')
+    assert config.data.a == 4
+    assert config.MY_COOL_CONFIG_VARIABLE == '228'
