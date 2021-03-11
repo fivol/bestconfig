@@ -1,4 +1,6 @@
+from config import Config, Source
 
 __all__ = [
-    'main'
+    Config,
+    Source
 ]
