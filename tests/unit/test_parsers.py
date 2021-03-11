@@ -1,7 +1,8 @@
 import pytest
-from bestconfig.main import *
 import os
 from pathlib import Path
+
+from bestconfig.file_parsers import YamlParser, EnvParser
 
 
 @pytest.fixture
