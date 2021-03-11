@@ -338,7 +338,7 @@ class YamlParser(AbstractFileParser):
     def read(cls, filepath: str) -> dict:
         with open(filepath, 'r') as file:
             try:
-                return yaml.load(file)
+                return yaml.load(file, Loader=yaml.Loader)
             except yaml.YAMLError:
                 raise SyntaxError
 
