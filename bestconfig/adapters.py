@@ -2,7 +2,7 @@ import os
 from abc import abstractmethod
 from pathlib import Path
 
-from bestconfig.config import Source
+from bestconfig.source import Source
 from bestconfig.file_parsers import *
 
 

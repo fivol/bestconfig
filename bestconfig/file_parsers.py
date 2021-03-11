@@ -1,7 +1,7 @@
 import configparser
 import json
 import re
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 import yaml
 
