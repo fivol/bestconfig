@@ -7,7 +7,6 @@ from enum import Enum, auto
 from pathlib import Path
 import json
 import yaml
-from environs import Env
 import configparser
 
 supported_extensions = ['json', 'yaml', 'ini', 'cfg', 'env']
@@ -70,7 +69,7 @@ class Source:
 ConfigType = t.Union[str, int, float, bool, dict, list]
 
 
-class ConfigProvider:
+class ConfigProvider(dict):
     """
     Основной класс, с которым имеет дело пользователь
     после создания конфига.
@@ -88,6 +87,7 @@ class ConfigProvider:
     def __init__(self, data: dict):
         self._data: dict = data
         self._modified: bool = False
+        super().__init__(data)
 
     @classmethod
     def _create_object(cls, data: dict):
@@ -131,6 +131,12 @@ class ConfigProvider:
         """Устанавливает значение по ключу"""
         self._modified = True
         self._data[item] = value
+
+    def to_dict(self):
+        return self._data
+
+    def __len__(self):
+        return len(self.__dict__)
 
     # TODO добавить cast к различным типам
 
@@ -369,7 +375,7 @@ class EnvParser(AbstractFileParser):
         Пропускает одинарные и двойные кавычки
         Пропускает комментарии
         """
-        template = re.compile(r'''^([^\s=]+)=(?:[\s"']*)(.+?)(?:[\s"']*)$''')
+        template = re.compile(r'''^([^\s#=]+)=(?:[\s"']*)(.+?)(?:[\s"']*)$''')
         result = {}
         with open(filepath, 'r') as ins:
             for line in ins:
@@ -425,4 +431,4 @@ class ConfigSourceAdapter:
 
 if __name__ == '__main__':
     config = Config('file')
-    print(config.to)
+    print(config.to_dict())
