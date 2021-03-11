@@ -325,6 +325,7 @@ class AbstractFileParser(metaclass=ABCMeta):
         :param filepath: полный путь до файла соответствующего типа (extension)
         :return: считанные из файла данные в виде python словаря
         Возбуждает FileNotFoundError при отсутствии файла
+        Бросает SyntaxError если файл не соответствует формату
         """
         pass
 
@@ -336,7 +337,10 @@ class YamlParser(AbstractFileParser):
     @classmethod
     def read(cls, filepath: str) -> dict:
         with open(filepath, 'r') as file:
-            return yaml.load(file)
+            try:
+                return yaml.load(file)
+            except yaml.YAMLError:
+                raise SyntaxError
 
 
 class JsonParser(AbstractFileParser):
@@ -346,7 +350,10 @@ class JsonParser(AbstractFileParser):
     @classmethod
     def read(cls, filepath: str) -> dict:
         with open(filepath, 'r') as file:
-            return json.load(file)
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                raise SyntaxError
 
 
 class IniParser(AbstractFileParser):
