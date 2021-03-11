@@ -81,7 +81,7 @@ class EnvParser(AbstractFileParser):
         Пропускает одинарные и двойные кавычки
         Пропускает комментарии
         """
-        template = re.compile(r'''^([^\s#=]+)=(?:[\s"']*)(.+?)(?:[\s"']*)$''')
+        template = re.compile(r'''\s*^([^\s#=]+)\s*=\s*(?:[\s"']*)(.*?)(?:[\s"']*)$''')
         result = {}
         with open(filepath, 'r') as ins:
             for line in ins:
