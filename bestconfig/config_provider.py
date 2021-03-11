@@ -61,8 +61,14 @@ class ConfigProvider(dict):
         self._modified = True
         self._data[item] = value
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Возвращает весь конфигурационные словарь, содержащий имеющиеся данные
+        Эквивалентно dict(config)"""
         return self._data
+
+    def assert_contains(self, item: str):
+        """Бросает исключение KeyError, если ключ не найден"""
+        self.get(item, raise_absent=True)
 
     def __len__(self):
         return len(self.__dict__)

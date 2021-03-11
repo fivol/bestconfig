@@ -30,3 +30,10 @@ def test_all_sources_config(config):
     assert config.logger.format.endswith('s')
     assert config.data.a == 4
     assert config.MY_COOL_CONFIG_VARIABLE == '228'
+
+
+def test_absent(config):
+    with pytest.raises(KeyError):
+        data = config['asdfdsf']
+
+    assert config.get('abccccc') is None
