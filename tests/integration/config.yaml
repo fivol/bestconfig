@@ -1,0 +1,5 @@
+db_name: postgres
+logger:
+  format: '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
+
+messages_limit: 10
