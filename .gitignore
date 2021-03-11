@@ -6,3 +6,4 @@ venv/
 .pytest_cache/
 dist/
 bestconfig.egg-info/
+build/

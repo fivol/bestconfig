@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 setup(
     name='bestconfig',
     packages=find_packages(include=['bestconfig']),
-    version='1.0.0',
+    version='1.0.3',
     description="""Setup your project config easily""",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -18,9 +18,9 @@ setup(
     author_email="borisoffficial@gmail.com",
     license='MIT',
     install_requires=[
-        'PyYAML==5.4.1',
+        'PyYAML>=5.0.0',
     ],
     setup_requires=['pytest-runner'],
-    tests_require=['pytest==6.2.2'],
+    tests_require=['pytest'],
     test_suite='tests',
 )
