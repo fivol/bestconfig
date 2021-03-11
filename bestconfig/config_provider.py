@@ -24,12 +24,6 @@ class ConfigProvider(dict):
         self._modified: bool = False
         super().__init__(data)
 
-    @classmethod
-    def _create_object(cls, data: dict):
-        obj = object.__new__(cls)
-        obj.__init__(data)
-        return obj
-
     def __new__(cls, data: ConfigType):
         if isinstance(data, dict):
             return cls._create_object(data)
@@ -43,7 +37,7 @@ class ConfigProvider(dict):
         attr_name = config.get('attr_name', 123)
         """
         if item in self._data:
-            return self.__new__(self.__class__, self._data['item'])
+            return self.__new__(self.__class__, self._data[item])
 
         if raise_absent:
             raise KeyError
@@ -54,13 +48,13 @@ class ConfigProvider(dict):
         """
         attr_name = config.attr_name
         """
-        return self.get(item)
+        return self.get(item, raise_absent=True)
 
     def __getitem__(self, item):
         """
         attr_name = config['attr_name']
         """
-        return ConfigProvider(self._data[''])
+        return self.get(item, raise_absent=True)
 
     def set(self, item: str, value: ConfigType):
         """Устанавливает значение по ключу"""
@@ -72,5 +66,11 @@ class ConfigProvider(dict):
 
     def __len__(self):
         return len(self.__dict__)
+
+    @classmethod
+    def _create_object(cls, data: dict):
+        obj = dict.__new__(cls)
+        obj.__init__(data)
+        return obj
 
     # TODO добавить cast к различным типам

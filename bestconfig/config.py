@@ -43,7 +43,8 @@ class Config:
         caller_path = traceback.extract_stack()[-2][0]
         sources = SourcesFilter.filter(sources, caller_path=caller_path)
         aggregator = ConfigAggregator(sources)
-        return ConfigProvider(aggregator.to_dict())
+        config_dict = aggregator.to_dict()
+        return ConfigProvider(config_dict)
 
     """Начало и конец списка источников конфигов, те, что ближе к концу 
     кри коллизии перезаписывают более ранние"""
@@ -76,7 +77,9 @@ class SourcesFilter:
         scanner = FilesScanner(caller_path=caller_path)
         for source in sources:
             if SourceType.FILE == source.source_type:
-                clear_sources += scanner.find_all_files(source.data['filename'])
+                found_files = scanner.find_all_files(source.data['filename'])
+                for filename in found_files:
+                    clear_sources.append(Source(filename))
             else:
                 clear_sources.append(source)
 
@@ -163,6 +166,7 @@ class ConfigAggregator:
     def to_dict(self) -> dict:
         """Возвращает готовый итоговый словарь, содержащий
         все необходимые данные (переменные конфигурации)"""
+        return self._combine_sources()
 
     @classmethod
     def _extract_source(cls, source) -> dict:
@@ -170,13 +174,10 @@ class ConfigAggregator:
         adapter = ConfigSourceAdapter(source)
         return adapter.get_dict()
 
-    def combine_sources(self) -> dict:
+    def _combine_sources(self) -> dict:
         """Возвращает общий для всех источников словарь"""
         data = {}
         for source in self._sources:
             data.update(self._extract_source(source))
 
         return data
-
-
-__all__ = [Config]
