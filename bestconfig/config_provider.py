@@ -1,4 +1,7 @@
-from bestconfig.main import ConfigType
+import typing as t
+
+"""Тип, которым может быть значение конфига"""
+ConfigType = t.Union[str, int, float, bool, dict, list]
 
 
 class ConfigProvider(dict):
