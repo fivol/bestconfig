@@ -1,7 +1,10 @@
+import os
+
 from bestconfig import Config
 import pytest
 
 from bestconfig.config_provider import ConfigProvider
+
 
 
 @pytest.fixture
@@ -29,7 +32,7 @@ def test_all_sources_config(config):
     assert isinstance(config.logger, ConfigProvider)
     assert config.logger.format.endswith('s')
     assert config.data.a == 4
-    assert config.MY_COOL_CONFIG_VARIABLE == '228'
+    assert config.MY_COOL_CONFIG_VARIABLE == 228
 
 
 def test_absent(config):

@@ -1,2 +1,16 @@
 logger:
   mode: DEBUG
+
+limit_users: 10
+list_config:
+  - first
+  - second
+  - third
+
+dict_config:
+  key1: value1
+  key2: value2
+  key3: value3
+
+bool_prop: true
+false_prop: no
