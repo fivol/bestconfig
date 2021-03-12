@@ -34,7 +34,7 @@ class ConfigProvider(dict):
         super().__init__(data)
 
     def get(self, item, default_value=None, raise_absent=False,
-            cast: AbstractConverter = default_converter) -> ConfigType:
+            cast: t.Optional[AbstractConverter] = default_converter) -> ConfigType:
         """
         Обращается к self._data и возвращает собственный экземпляр, если значение dict
         в противном случае само значение
@@ -56,20 +56,13 @@ class ConfigProvider(dict):
 
         return default_value
 
-    def __getattr__(self, item):
-        """
-        attr_name = config.attr_name
-        """
-        return self.get(item, raise_absent=True)
+    def as_is(self, item: str):
+        """Возвращает значение по ключу, не изменяя его"""
+        return self.get(item, cast=None)
 
-    def __getitem__(self, item):
-        """
-        attr_name = config['attr_name']
-        """
-        return self.get(item, raise_absent=True)
-
-    def __len__(self):
-        return len(self.__dict__)
+    def assert_contains(self, item: str):
+        """Бросает исключение KeyError, если ключ не найден"""
+        self.get(item, raise_absent=True)
 
     def set(self, item: str, value: ConfigType):
         """Устанавливает значение по ключу"""
@@ -82,10 +75,6 @@ class ConfigProvider(dict):
         """Возвращает весь конфигурационные словарь, содержащий имеющиеся данные
         Эквивалентно dict(config)"""
         return self._data
-
-    def assert_contains(self, item: str):
-        """Бросает исключение KeyError, если ключ не найден"""
-        self.get(item, raise_absent=True)
 
     def int(self, item: str) -> t.Optional[int]:
         """ config.int('limit') -> 45 """
@@ -110,3 +99,18 @@ class ConfigProvider(dict):
 
     def str(self, item: str) -> t.Optional[dict]:
         return self.get(item, cast=SimpleConverter(str))
+
+    def __getattr__(self, item):
+        """
+        attr_name = config.attr_name
+        """
+        return self.get(item, raise_absent=True)
+
+    def __getitem__(self, item):
+        """
+        attr_name = config['attr_name']
+        """
+        return self.get(item, raise_absent=True)
+
+    def __len__(self):
+        return len(self.__dict__)
