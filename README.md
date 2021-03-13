@@ -1,30 +1,42 @@
 # bestconfig
 ### *Python модуль для работы с файлами конфигурации проекта*
 
+Этот модуль поможет сильно упростить использование конфигурационных
+файлов, вы можете предпочитать хранить константы и 
+настройки в `.yaml`, `.json` или в переменных окружения, 
+это не важно, `bestconfig` учитывает множество вариантов
+и предоставляет очень удобный интерфейс доступа к параметрам
 ## Installation
 ```
 pip install bestconfig
 ```
 
 ## A Simple Example
-Предположим у вас такая структура проекта
+Предположим, у вас такая структура проекта
 ```
 root/
-    main.py
+    app:
+      main.py
+      myconfig.json
     config.yaml
     .env
 ```
-`/main.py`
+`app/main.py`
 ```python
 from bestconfig import Config
 
 config = Config("myconfig.json")
-print(dict(config))
-# Примеры использования класса
+# На этом вся настройка закончилась
+# В аргументах можно передать имена файлов,
+# в которых у вас хранятся настройки, если они нестандартные
+
+# Следующие варианты эквивалентны
+logger = config.get('logger')
 logger = config.logger
 logger = config['logger']
+
 mode = config.logger.mode
-mode = config.get('logger.mode', 'DEBUG')
+mode = config.get('logger.mode') # -> DEBUG или None
 mode = config['__unknown__'] # raise KeyError
 mode = config.get('__unknown__') # return None
 ```
@@ -34,7 +46,7 @@ mode = config.get('__unknown__') # return None
 ```editorconfig
 DATABASE_PASSWOD=postgres
 ```
-`/config.yaml`
+`config.yaml`
 ```yaml
 HOST: http://localhost
 PORT: 5050
@@ -48,12 +60,14 @@ logger:
     "BUILD": 5563
 }
 ```
-Вывод будет следующим
+`config.to_dict()` покажет следующее:
 ```editorconfig
 {
     "logger": {
         "mode": "DEBUG"       
-     }
+     },
+    "VERSION": "1.23.4",
+    "BUILD": 5563,                     
     "PORT": 5050,
     "HOST": "http://localhost",
     "DATABASE_PASSWOD": "postgres"
