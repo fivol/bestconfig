@@ -2,6 +2,7 @@ import configparser
 import json
 import re
 from abc import ABCMeta, abstractmethod
+from types import ModuleType
 
 import yaml
 
@@ -108,3 +109,39 @@ class EnvParser(AbstractFileParser):
                 if match is not None:
                     result[match.group(1)] = match.group(2)
         return result
+
+
+class PyParser(AbstractFileParser):
+    """
+    ЭКСПЕРЕМЕНТАЛЬНАЯ ФИЧА
+    Файл выполняется и переменные
+    из него возвращаются в виде словаря ключ: значение
+    Внимание: файл не должен иметь зависимостей, выполняется код
+    функцией exec. Если в нем есть import, поведение не определено
+    """
+
+    extension = 'env'
+
+    @classmethod
+    def read(cls, filepath: str) -> dict:
+        with open(filepath, 'r') as file:
+            data = file.read()
+
+        __locals = {}
+        data += '\n__locals__ = locals()'
+        try:
+            # Выполнение кода из файла
+            exec(data, __locals, __locals)
+        except:
+            raise SyntaxError(
+                'Ошибка выполнения файла %s, скорее всего в нем есть import-ы, которые приводят к ошибки' % filepath)
+
+        # Оставляем только локальные переменные
+        keys = __locals.keys() - {'__builtins__', '__locals__'}
+
+        # Возвращаем все локальные переменные, кроме модулей
+        return {
+            key: __locals[key]
+            for key in keys
+            if not isinstance(__locals[key], ModuleType)
+        }

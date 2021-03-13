@@ -56,6 +56,7 @@ class FileAdapter(AbstractAdapter):
         # same with .ini
         'cfg': IniParser,
         'env': EnvParser,
+        'py': PyParser,
     }
 
     """Общепринятые названия и соответствующие им расширения"""

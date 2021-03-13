@@ -46,3 +46,9 @@ def test_ini_config():
     assert config.get('bitbucket.org')['CompressionLevel'] == 9
     with pytest.raises(KeyError):
         var = config.get('bitbucket.org').unknown
+
+
+def test_py_config():
+    config = Config('settings.py')
+    assert config.lowercase_setting == 'value'
+    assert config.int('ONLY_PYTHON_VAR') == 1233

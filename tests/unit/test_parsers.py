@@ -2,7 +2,7 @@ import pytest
 import os
 from pathlib import Path
 
-from bestconfig.file_parsers import YamlParser, EnvParser, IniParser
+from bestconfig.file_parsers import YamlParser, EnvParser, IniParser, PyParser
 
 
 @pytest.fixture
@@ -61,5 +61,8 @@ def test_ini_parser(curr_dir):
     assert data['general']['value'] == '34'
 
 
-
-
+def test_parse_py(curr_dir):
+    filepath = Path(os.path.join(curr_dir, 'settings.py'))
+    data = PyParser.read(filepath)
+    assert 'lowercase_setting' in data
+    assert data['PYTHON_KEY'] == 444
