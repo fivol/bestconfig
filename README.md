@@ -43,7 +43,7 @@ mode = config.get('__unknown__') # return None
 Содержимое файлов:
 
 `.env`
-```editorconfig
+```dotenv
 DATABASE_PASSWOD=postgres
 ```
 `config.yaml`
@@ -54,14 +54,14 @@ logger:
   mode: WARNING
 ```
 `myconfig.json`
-```editorconfig
+```json
 {
     "VERSION": "1.23.4",
     "BUILD": 5563
 }
 ```
 `config.to_dict()` покажет следующее:
-```editorconfig
+```json
 {
     "logger": {
         "mode": "DEBUG"       
@@ -74,7 +74,7 @@ logger:
 }
 ```
 ## Что произошло?
-1. Класс `Config` просканировал текущую дирикторию, вплоть до корня проекта
+1. Класс `Config` просканировал текущую директорию, вплоть до корня проекта
 2. Нашел все указанные в аргументах файлы и те, что в списке по умолчанию 
    (например `.env`, `env_file`, `config.yaml`, `configuration.ini` и тд)
    
@@ -84,7 +84,7 @@ logger:
   - `.json`
   - `.yaml`
   - `.ini`
-  - `.py` (если в нем нет инициализации `Config()` во избежании рекурсии)
+  - `.py` (если в нем нет инициализации `Config()` во избежание рекурсии)
   - `.cfg`
 - Файлы в формате `CONFIG_NAME=CONFIG_VALUE`
 - Уже существующие и новые переменные окружения
@@ -94,12 +94,12 @@ logger:
 ### Файлы для поиска по умолчанию
 - Все комбинации имени
   
-  `config` `configuration` `settings` `conf`
+  `config` `configuration` `settings` `setting` `conf`
   
-  и расширений
+  и расширения
   
   `.json` `.yaml` `.ini` `.env` `.cfg`
-- Выеденные, часто используемые названия
+- Выделенные, часто используемые названия
     - `env_file`
     - `.env`
     - `config.py`
@@ -109,9 +109,58 @@ logger:
 1. Нотация `python dict` `config['name']`
 Бросает исключение при отсутствии
 1. `config.get('name', 'default_value', raise_absent=False)`   
+1. `config.get('name.subname')` если параметр это тоже словарь, 
+к вложенным значениям можно обращаться единым запросом через `get`, 
+   вложенность не ограничена
+1. Можно при запросе, сразе приводить к определенному типу
+    ```python
+    config = Config()
+    
+    LIMIT = config.int('LIMIT')
+    RATE = config.float('RATE')
+    LOGGER = config.dict('logger')
+    USERNAME = config.str('ADMIN_USERNAME')
+    PRICES = config.list('PRICES')
+    ```
+    Эти функции, вернут вам значение соответствующего типа, либо,
+    если преобразование не удалось - `None`
+1. По умолчанию, при обращении без указания типа, происходит следующее
+    1. Каждый формат файлов, например `.yaml` уже парсится с учетом типов,
+  так `varname: 123` будет считано как число 123  
+    1.  Если значение все равно представляет собой строку, 
+  совершается попытка интерпретировать его `python` выражение, 
+        так `.env` файл, содержащий `LIST=[1, 2]` станет
+        ```python
+        l = config.get('LIST')
+        isinstance(l, list) # True
+        print(l) # [1, 2]
+        ```
+        Чтобы избежать такого поведения, используйте
+        ```python
+         config.get_raw('key') 
+        ```
+        Возвращенное значение не будет обработано, на самом деле, эта функция всего лишь делает
+    `config.get(cast=None)`. За подробностями в исходники ;)
+
+Сохранить новую переменную, можно с помощью `set`
+```python
+config.set('pages_limit', 12)
+print(config.get('pages_limit')) -> 12
+
+config.set('d', {'a': 'value'})
+# config.d.a == 'value'
+```
+
+Чтобы проверить, что нужные переменные окружения или файлы 
+импортировались, используйте `config.assert_contains()`
+```python
+config.set('key', 'value')
+config.assert_contains('key') # pass
+config.assert_contains('key1') # raise KeyError
+```
 
 **Если после документации остались вопросы, 
-код подробно документирован, можно смело смотреть в исходники**
+код подробно документирован, можно смело смотреть в исходники и читать docstring**
 
 ## Запланированные обновления
 - Поддержка загрузки из базы данных

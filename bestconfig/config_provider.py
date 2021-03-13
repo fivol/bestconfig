@@ -32,13 +32,21 @@ class ConfigProvider(dict):
         self._modified: bool = False
         super().__init__(data)
 
-    def get(self, item, default_value=None, raise_absent=False, case_sensitive: bool = False,
+    def get(self, item: str, default_value=None, raise_absent=False,
             cast: t.Optional[AbstractConverter] = default_converter) -> ConfigType:
         """
         Обращается к self._data и возвращает собственный экземпляр, если значение dict
         в противном случае само значение
 
         attr_name = config.get('attr_name', 123)
+
+        :param item: ключ, значение по которому нужно вернуть
+        :param default_value: при отсутствии ключа, возвращается оно
+        :param raise_absent: если ключа не существует, кинуть KeyError,
+        в противном случает вернуть None
+        :param cast: наследник класса AbstractConverter,
+        если передан, возвращается cast.cast(value)
+        :return: значение по ключу, None или KeyError
         """
         assert isinstance(item, str), 'Key must be str, not %s' % type(item)
 
@@ -60,8 +68,9 @@ class ConfigProvider(dict):
 
         return default_value
 
-    def as_is(self, item: str):
-        """Возвращает значение по ключу, не изменяя его"""
+    def get_raw(self, item: str):
+        """Возвращает значение по ключу, не изменяя его
+        Такое, какое было считано из файла"""
         return self.get(item, cast=None)
 
     def assert_contains(self, item: str):
@@ -105,18 +114,17 @@ class ConfigProvider(dict):
         return self.get(item, cast=SimpleConverter(str))
 
     def __getattr__(self, item):
-        """
-        attr_name = config.attr_name
-        """
+        """attr_name = config.attr_name"""
         return self.get(item, raise_absent=True)
 
     def __getitem__(self, item):
-        """
-        attr_name = config['attr_name']
-        """
+        """attr_name = config['attr_name']"""
         return self.get(item, raise_absent=True)
 
     def __len__(self):
+        """
+        :return: количество индексируемых переменных
+        """
         return len(self.__dict__)
 
     def _unsafe_access_key(self, item: str) -> t.Optional[ConfigType]:
