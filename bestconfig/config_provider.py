@@ -41,18 +41,23 @@ class ConfigProvider(dict):
 
         attr_name = config.get('attr_name', 123)
         """
-        if item in self._data:
-            value = self._data[item]
+        assert isinstance(item, str), 'Key must be str, not %s' % type(item)
+
+        try:
+            # Обработка случая config.get('key.other')
+            value = self._unsafe_access_key(item)
+
             # Возвращаем словарь в виде класса ConfigProvider
             if isinstance(value, dict):
                 return self.__class__(self._data[item])
+
             # Преобразуем объект в соответствии с переданным в параметрах cast
             if cast:
                 return cast.cast(value)
             return value
-
-        if raise_absent:
-            raise KeyError
+        except KeyError:
+            if raise_absent:
+                raise KeyError
 
         return default_value
 
@@ -114,3 +119,23 @@ class ConfigProvider(dict):
 
     def __len__(self):
         return len(self.__dict__)
+
+    def _unsafe_access_key(self, item: str) -> t.Optional[ConfigType]:
+        """Возвращает значение из _data, пытаясь его найти
+        по строке виде key.subkey.otherkey или без точки
+        Пример: config.get('logger.mode')
+        config.get('ADMIN_ID')
+        Кидает KeyError, при отсутствии ключа
+        """
+        if item in self._data:
+            return self._data[item]
+
+        # Попытка пройти по частям ключей, разделенным точками
+        keys = item.split('.')
+        value = self._data
+        for key in keys:
+            if not isinstance(value, dict):
+                raise KeyError
+            value = value[key]
+
+        return value
