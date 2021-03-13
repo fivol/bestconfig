@@ -2,7 +2,7 @@ import pytest
 import os
 from pathlib import Path
 
-from bestconfig.file_parsers import YamlParser, EnvParser
+from bestconfig.file_parsers import YamlParser, EnvParser, IniParser
 
 
 @pytest.fixture
@@ -43,6 +43,23 @@ def test_yaml_parser(curr_dir):
     assert 'logger' in d
     assert 'mode' in d['logger']
     assert d['logger']['mode'] == 'DEBUG'
+
+
+def test_cfg_parser(curr_dir):
+    filepath = Path(os.path.join(curr_dir, 'config.cfg'))
+    data = IniParser.read(filepath)
+    assert 'topsecret.server.com' in data
+    assert data['bitbucket.org']['User'] == 'hg'
+
+
+def test_ini_parser(curr_dir):
+    filepath = Path(os.path.join(curr_dir, 'config.ini'))
+    data = IniParser.read(filepath)
+    assert 'section_a' in data
+    assert data['section_a']['string_val'] == 'hello'
+    assert data['section_a']['bool_val'] == 'false'
+    assert data['general']['value'] == '34'
+
 
 
 

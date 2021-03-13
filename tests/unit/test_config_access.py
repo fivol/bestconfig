@@ -29,3 +29,20 @@ def test_config_in_files():
     assert config.bool('bool_prop') is True
     assert config.bool('false_prop') is False
     assert config.str('logger.mode') == 'DEBUG'
+
+
+def test_ini_config():
+    config = Config()
+    assert config.get('general.value') == 34
+    with pytest.raises(KeyError):
+        config.get('asdf', raise_absent=True)
+
+    with pytest.raises(KeyError):
+        a = config.asdffdsa
+    assert config.bool('section_a.bool_val') is False
+    assert config.float('section_a.pi_val') == 3.14
+    assert 'Port' in config.get('topsecret.server.com')
+    assert config.get('topsecret.server.com')['Port'] == 50022
+    assert config.get('bitbucket.org')['CompressionLevel'] == 9
+    with pytest.raises(KeyError):
+        var = config.get('bitbucket.org').unknown

@@ -57,15 +57,34 @@ class JsonParser(AbstractFileParser):
 
 class IniParser(AbstractFileParser):
     """Основана на configparser (https://docs.python.org/3/library/configparser.html)
-    Считывает файл и предоставляет словарь с ключами - секциями"""
+    Парсит файлы с расширениями .ini или .cfg
+    Считывает файл и предоставляет словарь с ключами - секциями
+    Пример:
+    # config.cfg
+    [bitbucket.org]
+    User = hg
+
+    [topsecret.server.com]
+    Port = 50022
+    ForwardX11 = no
+
+    # main.py
+    config = Config()
+    config.get('topsecret.server.com').Port
+    """
     extension = 'ini'
 
     @classmethod
     def read(cls, filepath: str) -> dict:
-        # TODO протестировать
         parser = configparser.ConfigParser()
+        # Read file with case sensitive keys
+        parser.optionxform = str
         parser.read(filepath)
-        return dict(parser)
+        sections = parser.sections()
+        return {
+            section_name: dict(parser[section_name])
+            for section_name in sections
+        }
 
 
 class EnvParser(AbstractFileParser):

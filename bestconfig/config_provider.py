@@ -1,4 +1,3 @@
-import typing as t
 from warnings import warn
 from bestconfig.converters import *
 
@@ -33,7 +32,7 @@ class ConfigProvider(dict):
         self._modified: bool = False
         super().__init__(data)
 
-    def get(self, item, default_value=None, raise_absent=False,
+    def get(self, item, default_value=None, raise_absent=False, case_sensitive: bool = False,
             cast: t.Optional[AbstractConverter] = default_converter) -> ConfigType:
         """
         Обращается к self._data и возвращает собственный экземпляр, если значение dict
@@ -127,6 +126,7 @@ class ConfigProvider(dict):
         config.get('ADMIN_ID')
         Кидает KeyError, при отсутствии ключа
         """
+
         if item in self._data:
             return self._data[item]
 
@@ -134,8 +134,12 @@ class ConfigProvider(dict):
         keys = item.split('.')
         value = self._data
         for key in keys:
-            if not isinstance(value, dict):
+            if not hasattr(value, '__getitem__'):
                 raise KeyError
+
+            if key not in value:
+                raise KeyError
+
             value = value[key]
 
         return value

@@ -53,6 +53,8 @@ class FileAdapter(AbstractAdapter):
         'json': JsonParser,
         'yaml': YamlParser,
         'ini': IniParser,
+        # same with .ini
+        'cfg': IniParser,
         'env': EnvParser,
     }
 
