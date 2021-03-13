@@ -46,7 +46,7 @@ class SimpleConverter(AbstractConverter):
 
 
 class PythonicConverter(AbstractConverter):
-    """Конвертирует, исходя из питоновского синтекса
+    """Конвертирует, исходя из питоновского синтекса.
     Например PythonicConverter("['hi', 234]") = ['hi', 234]
     """
 
