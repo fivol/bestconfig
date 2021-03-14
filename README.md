@@ -158,7 +158,34 @@ config.set('key', 'value')
 config.assert_contains('key') # pass
 config.assert_contains('key1') # raise KeyError
 ```
+Бывает необходимо некоторым образом преобразовать 
+конфиги после импорта из файлов, тогда пригодится
+```python
+from bestconfig import Config
 
+config = Config()
+
+FULL_NAME = f'{config.name} {config.lastname}'
+
+config.update_from_locals()
+```
+`locals()` то есть локальные при вызове этой функции станут доступны
+`config.get('FULL_NAME')`
+
+Также иногда бывает удобно, вместо `config.set('key', 'value')`
+добавить целый словарь или даже файл во время исполнения
+```python
+from bestconfig import Config
+config = Config(exclude_default=True)
+
+config.insert({
+    'name': 'Ivan'
+})
+config.assert_contains('name')
+
+# Добавить к существующим еще и `other_file.yaml`
+config.insert('other_file.yaml')
+```
 
 ### Можете также посмотреть
 
