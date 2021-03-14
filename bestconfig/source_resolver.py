@@ -1,4 +1,5 @@
 import os
+import traceback
 import typing as t
 from pathlib import Path
 
@@ -44,7 +45,7 @@ class SourceFilter:
         if target == Source.env:
             source = Source(SourceType.ENV)
         elif isinstance(target, dict):
-            source = Source(SourceType.ENV)
+            source = Source(SourceType.DICT)
             source.set('data', target)
         elif isinstance(target, str):
             source = Source(SourceType.FILE)
@@ -90,6 +91,12 @@ class FilesScanner:
     def __init__(self, caller_path: str):
         self._root_path = Path(os.getcwd())
         self._caller_path = caller_path
+
+    @staticmethod
+    def get_caller_path():
+        """Возвращает файл, в котором была вызвана
+        функция, которая вызвала эту"""
+        return traceback.extract_stack()[-3][0]
 
     def find_all_files(self, filename: str) -> t.List[Path]:
         """

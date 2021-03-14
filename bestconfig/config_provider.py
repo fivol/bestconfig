@@ -1,5 +1,8 @@
 from warnings import warn
+import inspect
 from bestconfig.converters import *
+from bestconfig.source_resolver import SourceResolver, FilesScanner
+from bestconfig.source import TargetType
 
 """Тип, которым может быть значение конфига"""
 ConfigType = t.Union[str, int, float, bool, dict, list]
@@ -28,7 +31,6 @@ class ConfigProvider(dict):
     """
 
     def __init__(self, data: dict):
-        self._data: dict = data
         self._modified: bool = False
         super().__init__(data)
 
@@ -53,10 +55,9 @@ class ConfigProvider(dict):
         try:
             # Обработка случая config.get('key.other')
             value = self._unsafe_access_key(item)
-
             # Возвращаем словарь в виде класса ConfigProvider
             if isinstance(value, dict):
-                return self.__class__(self._data[item])
+                return self.__class__(self[item])
 
             # Преобразуем объект в соответствии с переданным в параметрах cast
             if cast:
@@ -73,6 +74,9 @@ class ConfigProvider(dict):
         Такое, какое было считано из файла"""
         return self.get(item, cast=None)
 
+    def contains(self, item: str):
+        return self.get(item) is not None
+
     def assert_contains(self, item: str):
         """Бросает исключение KeyError, если ключ не найден"""
         self.get(item, raise_absent=True)
@@ -82,18 +86,44 @@ class ConfigProvider(dict):
         if not item:
             warn('Использование пустой строки в качестве ключа', UserWarning)
         self._modified = True
-        self._data[item] = value
+        self[item] = value
 
     def to_dict(self) -> dict:
         """Возвращает весь конфигурационные словарь, содержащий имеющиеся данные
         Эквивалентно dict(config)"""
-        return self._data
+        return dict(self)
 
-    def add(self, arg):
+    def insert(self, target: TargetType):
         """
+        Добавляет в основное хранилище новые данные
+        по указанию target (то же самое, что аргумент в Config())
+        :param target: имя файла или словарь
+        """
+        resolver = SourceResolver(FilesScanner.get_caller_path())
+        new_data = resolver.resolve(target)
+        self.update(new_data)
 
-        :return:
+    def update_from_locals(self):
+        """Обновляет словарь отфильтрованными локальными переменными
+        из вызвавшего функцию контекста.
+        Переменные только типов (str, int, float, dict, list)
+        будут учтены
         """
+        config_types = (str, int, float, dict, list)
+
+        def is_config_var(name, value):
+            if not isinstance(value, config_types):
+                return False
+            if name.startswith('__'):
+                return False
+            return True
+
+        local_vars = inspect.currentframe().f_back.f_locals
+        data = {
+            key: value for key, value in local_vars.items()
+            if is_config_var(key, value)
+        }
+        self.insert(data)
 
     def int(self, item: str) -> t.Optional[int]:
         """ config.int('limit') -> 45 """
@@ -127,11 +157,8 @@ class ConfigProvider(dict):
         """attr_name = config['attr_name']"""
         return self.get(item, raise_absent=True)
 
-    def __len__(self):
-        """
-        :return: количество индексируемых переменных
-        """
-        return len(self.__dict__)
+    def __contains__(self, item: str):
+        return self.contains(item)
 
     def _unsafe_access_key(self, item: str) -> t.Optional[ConfigType]:
         """Возвращает значение из _data, пытаясь его найти
@@ -141,12 +168,12 @@ class ConfigProvider(dict):
         Кидает KeyError, при отсутствии ключа
         """
 
-        if item in self._data:
-            return self._data[item]
+        if super().__contains__(item):
+            return super().__getitem__(item)
 
         # Попытка пройти по частям ключей, разделенным точками
         keys = item.split('.')
-        value = self._data
+        value = self.to_dict()
         for key in keys:
             if not hasattr(value, '__getitem__'):
                 raise KeyError

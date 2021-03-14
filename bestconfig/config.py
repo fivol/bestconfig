@@ -2,7 +2,7 @@ import traceback
 import typing as t
 from bestconfig.config_provider import ConfigProvider
 from bestconfig.source import Source, TargetType
-from bestconfig.source_resolver import SourceResolver
+from bestconfig.source_resolver import SourceResolver, FilesScanner
 
 supported_extensions = ['json', 'yaml', 'ini', 'cfg', 'env']
 applicant_files = ['config', 'conf', 'setting', 'settings', 'configuration']
@@ -37,8 +37,7 @@ class Config:
         targets = cls._get_targets(*args, exclude_default=exclude_default, exclude=exclude or set())
         # Передаем файл, из которого был совершен вызов Config()
         # в объекте traceback.extract_stack, последний вызов это данная функция, а перед ним, вызывающая
-        caller_path = traceback.extract_stack()[-2][0]
-        resolver = SourceResolver(caller_path=caller_path)
+        resolver = SourceResolver(caller_path=FilesScanner.get_caller_path())
         # Преобразует все цели в один словарь
         config_dict = resolver.resolve_all(targets)
         return ConfigProvider(config_dict)
