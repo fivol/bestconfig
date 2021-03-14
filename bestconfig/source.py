@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from pathlib import Path
+import typing as t
 
 
 class SourceType(Enum):
@@ -9,40 +10,40 @@ class SourceType(Enum):
     FILE = auto()
 
 
+"""
+Тип объекта, передаваемого пользователем для инициализации
+словаря конфигурации, это может быть 
+1. Название файла (полный пусть, часть пути, относительный путь)
+2. Непосредственно словарь
+"""
+TargetType = t.Union[str, dict, Path]
+
+
 class Source:
-    """Класс обертка над источникоми конфигов,
-    например:
-     - Source.env - указывает на переменные окружения
-     TODO: Дописать примеры использования
-     """
+    """
+    Класс для хранения промежуточных результатов
+    получения итогового словаря из target.
+    Соглашение о данных
+    filename: str. Путь до файла, относительный или абсолютный
+    filepath: Path. Абсолютный путь до файла
+    data: dict. Словарь конфигов
+    """
     env = '__ENV__'
 
-    def __init__(self, value, manual=False):
+    def __init__(self, source_type: SourceType):
         """
-        :param value:
-        :param manual: True, если данный источник указал пользователь вручную
-        False, если взято из настроек по умолчанию
+        :param source_type: тип источника
         """
-        # TODO точка роста, сюда можно добавить другие источники
 
         # dict в котором хранятся данные, характеризующие источник
-        self.data = {}
+        self._data = {}
+        self.source_type = source_type
 
-        if value == self.env:
-            self.source_type = SourceType.ENV
-        elif isinstance(value, dict):
-            self.source_type = SourceType.DICT
-            self.data = value
-        elif isinstance(value, str):
-            self.source_type = SourceType.FILE
-            self.data['filename'] = value
-        elif isinstance(value, Path):
-            self.source_type = SourceType.FILE
-            self.data['filepath'] = value
-        else:
-            raise ValueError('Unknown source type %s' % type(value))
+    def set(self, item: str, value):
+        self._data[item] = value
 
-        self.manual = manual
+    def get(self, item: str):
+        return self._data[item]
 
     def __repr__(self):
-        return f'Source({self.data})' if self.data else f'Source(type={self.source_type})'
+        return f'Source({self.source_type})'

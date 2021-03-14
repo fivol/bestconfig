@@ -89,6 +89,12 @@ class ConfigProvider(dict):
         Эквивалентно dict(config)"""
         return self._data
 
+    def add(self, arg):
+        """
+
+        :return:
+        """
+
     def int(self, item: str) -> t.Optional[int]:
         """ config.int('limit') -> 45 """
         return self.get(item, cast=SimpleConverter(int))

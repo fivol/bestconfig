@@ -6,7 +6,6 @@ import pytest
 from bestconfig.config_provider import ConfigProvider
 
 
-
 @pytest.fixture
 def config():
     return Config()

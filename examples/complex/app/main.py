@@ -4,7 +4,7 @@
 
 from bestconfig import Config
 
-config = Config()
+config = Config('../dev.env', 'app.yaml')
 
 if __name__ == '__main__':
     authorized_user_limit = config.int('limits.authorized.messages_per_second')

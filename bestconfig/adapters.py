@@ -29,7 +29,7 @@ class DictAdapter(AbstractAdapter):
 
     @classmethod
     def get_dict(cls, source: Source) -> dict:
-        return source.data
+        return source.get('data')
 
 
 class FileAdapter(AbstractAdapter):
@@ -37,7 +37,7 @@ class FileAdapter(AbstractAdapter):
 
     @classmethod
     def get_dict(cls, source: Source) -> dict:
-        filepath = source.data.get('filepath')
+        filepath = source.get('filepath')
         assert isinstance(filepath, Path)
         filetype = cls._get_file_type(filepath)
 

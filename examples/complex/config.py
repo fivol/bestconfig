@@ -4,7 +4,7 @@
 
 from bestconfig import Config
 
-config = Config()
+config = Config('dev.env')
 
 config.assert_contains('VALID')
 

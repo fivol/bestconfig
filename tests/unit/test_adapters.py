@@ -2,11 +2,11 @@ import pytest
 import os
 
 from bestconfig.adapters import *
-from bestconfig.source import Source
+from bestconfig.source import SourceType
 
 
 def test_env_adapter():
-    source = Source(Source.env)
+    source = Source(SourceType.ENV)
     os.environ['var1'] = 'val1'
     os.environ['var2'] = '2'
 
@@ -20,7 +20,8 @@ def test_dict_adapter():
     d = {
         'key': 'value'
     }
-    source = Source(d)
+    source = Source(SourceType.DICT)
+    source.set('data', d)
 
     data = DictAdapter.get_dict(source)
     assert data['key'] == 'value'
