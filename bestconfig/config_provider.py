@@ -56,7 +56,7 @@ class ConfigProvider(dict):
             value = self._unsafe_access_key(item)
             # Возвращаем словарь в виде класса ConfigProvider
             if isinstance(value, dict):
-                return self.__class__(self[item])
+                return self.__class__(value)
 
             # Преобразуем объект в соответствии с переданным в параметрах cast
             if cast:
