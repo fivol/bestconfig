@@ -31,7 +31,6 @@ class ConfigProvider(dict):
     """
 
     def __init__(self, data: dict):
-        self._modified: bool = False
         super().__init__(data)
 
     def get(self, item: str, default_value=None, raise_absent=False,
@@ -85,7 +84,6 @@ class ConfigProvider(dict):
         """Устанавливает значение по ключу"""
         if not item:
             warn('Использование пустой строки в качестве ключа', UserWarning)
-        self._modified = True
         self[item] = value
 
     def to_dict(self) -> dict:
