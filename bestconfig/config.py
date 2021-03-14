@@ -1,4 +1,3 @@
-import traceback
 import typing as t
 from bestconfig.config_provider import ConfigProvider
 from bestconfig.source import Source, TargetType

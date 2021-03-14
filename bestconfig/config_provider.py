@@ -116,6 +116,8 @@ class ConfigProvider(dict):
                 return False
             if name.startswith('__'):
                 return False
+            if isinstance(value, self.__class__):
+                return False
             return True
 
         local_vars = inspect.currentframe().f_back.f_locals
