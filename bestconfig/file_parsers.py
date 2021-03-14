@@ -3,8 +3,12 @@ import json
 import re
 from abc import ABCMeta, abstractmethod
 from types import ModuleType
+from warnings import warn
 
 import yaml
+
+# Название библиотеки, используется для проверок на корректность парсинга .py файлов
+LIB_NAME = 'bestconfig'
 
 
 class AbstractFileParser(metaclass=ABCMeta):
@@ -126,6 +130,11 @@ class PyParser(AbstractFileParser):
     def read(cls, filepath: str) -> dict:
         with open(filepath, 'r') as file:
             data = file.read()
+
+        if LIB_NAME in data:
+            raise AssertionError(
+                'Нельзя индексировать .py файла, в котором уже есть Config(), используйте config.update_from_locals()'
+            )
 
         __locals = {}
         data += '\n__locals__ = locals()'

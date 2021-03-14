@@ -158,6 +158,8 @@ config.set('key', 'value')
 config.assert_contains('key') # pass
 config.assert_contains('key1') # raise KeyError
 ```
+
+
 ### Можете также посмотреть
 
 - [Примеры использования](examples)
