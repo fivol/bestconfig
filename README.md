@@ -158,6 +158,11 @@ config.set('key', 'value')
 config.assert_contains('key') # pass
 config.assert_contains('key1') # raise KeyError
 ```
+### Можете также посмотреть
+
+- [Примеры использования](examples)
+- [github](https://github.com/fivol/bestconfig)
+- [Как запустить тесты](docs/TESTS.md)
 
 **Если после документации остались вопросы, 
 код подробно документирован, можно смело смотреть в исходники и читать docstring**
