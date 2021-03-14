@@ -1,0 +1,3 @@
+
+
+INSERT_VARIABLE = '1' * 10
