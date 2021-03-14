@@ -16,7 +16,7 @@ source venv/bin/activate
 ```shell
 pip install -r requirements.txt
 ```
-5. Добавляем модуль в путь для поиска `pytest`
+5. Добавляем библиотек в путь для поиска `pytest`
 ```shell
 export PYTHONPATH=$PYTHONPATH:$PWD
 ```   
