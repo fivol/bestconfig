@@ -189,8 +189,9 @@ config.insert('other_file.yaml')
 
 ### Можете также посмотреть
 
-- [Примеры использования](examples)
 - [github](https://github.com/fivol/bestconfig)
+  Остальные ссылки доступны только с оттуда (не с [pypi.org](https://pypi.org/project/bestconfig/))
+- [Примеры использования](examples)
 - [Как запустить тесты](docs/TESTS.md)
 
 **Если после документации остались вопросы, 
