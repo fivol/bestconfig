@@ -18,7 +18,7 @@ setup(
     author_email="borisoffficial@gmail.com",
     license='MIT',
     install_requires=[
-        'PyYAML>=5.0.0',
+        'PyYAML>=4.0.0',
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
