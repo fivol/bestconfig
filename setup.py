@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 setup(
     name='bestconfig',
     packages=find_packages(include=['bestconfig']),
-    version='1.3.1',
+    version='1.3.2',
     description="""Setup your project config easily""",
     long_description=README,
     long_description_content_type="text/markdown",
