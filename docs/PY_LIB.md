@@ -13,7 +13,7 @@ pip install twine
 ```
 python setup.py pytest
 ```
-Собрать библиотеку в папку `dist`
+Собрать библиотеку в папку `dist`. Не забываем увеличить версию в файле [setup.py](setup.py)
 ```
 python setup.py sdist bdist_wheel
 ```

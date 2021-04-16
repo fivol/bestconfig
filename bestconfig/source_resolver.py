@@ -1,6 +1,7 @@
 import os
 import traceback
 import typing as t
+import warnings
 from pathlib import Path
 
 from bestconfig.adapters import EnvAdapter, FileAdapter, DictAdapter
@@ -178,7 +179,8 @@ class ConfigAggregator:
     def _extract_source(cls, source) -> dict:
         """Возвращает соответствующий источнику словарь данных"""
         adapter = ConfigSourceAdapter(source)
-        return adapter.get_dict()
+        data_dict = adapter.get_dict()
+        return data_dict or {}
 
     def _combine_sources(self) -> dict:
         """Возвращает общий для всех источников словарь"""

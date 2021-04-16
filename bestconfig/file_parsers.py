@@ -1,6 +1,7 @@
 import configparser
 import json
 import re
+import warnings
 from abc import ABCMeta, abstractmethod
 from types import ModuleType
 from warnings import warn
@@ -42,7 +43,10 @@ class YamlParser(AbstractFileParser):
     def read(cls, filepath: str) -> dict:
         with open(filepath, 'r') as file:
             try:
-                return yaml.load(file, Loader=yaml.Loader)
+                data_dict = yaml.load(file, Loader=yaml.Loader)
+                if not isinstance(data_dict, dict):
+                    warnings.warn(f"Error parsing file: {filepath}", SyntaxWarning)
+                return data_dict or {}
             except yaml.YAMLError:
                 raise SyntaxError
 

@@ -1,6 +1,7 @@
 import pytest
 import os
 from pathlib import Path
+from bestconfig import Config
 
 from bestconfig.file_parsers import YamlParser, EnvParser, IniParser, PyParser
 
@@ -8,6 +9,14 @@ from bestconfig.file_parsers import YamlParser, EnvParser, IniParser, PyParser
 @pytest.fixture
 def curr_dir():
     return os.path.dirname(__file__)
+
+
+def test_empty_yaml():
+    config = Config('empty_yaml.yaml')
+
+
+def test_empty_ini():
+    config = Config('empty.ini')
 
 
 def test_env_parser(curr_dir):
