@@ -7,3 +7,4 @@ venv/
 dist/
 bestconfig.egg-info/
 build/
+.eggs/
