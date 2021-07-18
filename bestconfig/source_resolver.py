@@ -1,12 +1,11 @@
 import os
 import traceback
 import typing as t
-import warnings
 from pathlib import Path
 
-from bestconfig.adapters import EnvAdapter, FileAdapter, DictAdapter
+from .adapters import EnvAdapter, FileAdapter, DictAdapter
 
-from bestconfig.source import Source, TargetType, SourceType
+from .source import Source, TargetType, SourceType
 
 
 class SourceResolver:

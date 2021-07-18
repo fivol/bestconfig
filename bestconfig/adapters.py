@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 import typing as t
 
-from bestconfig.source import Source
-from bestconfig.file_parsers import *
+from .source import Source
+from .file_parsers import *
 
 
 class AbstractAdapter(metaclass=ABCMeta):
@@ -52,6 +52,7 @@ class FileAdapter(AbstractAdapter):
     specific_parsers = {
         'json': JsonParser,
         'yaml': YamlParser,
+        'yml': YamlParser,
         'ini': IniParser,
         # same with .ini
         'cfg': IniParser,

@@ -7,6 +7,8 @@
 Для сборки понадобится
 ```shell
 pip install twine
+pip install wheel
+pip install setuptools
 ```
 
 Запустить тесты из папки `tests`

@@ -1,9 +1,9 @@
 import typing as t
-from bestconfig.config_provider import ConfigProvider
-from bestconfig.source import Source, TargetType
-from bestconfig.source_resolver import SourceResolver, FilesScanner
+from .config_provider import ConfigProvider
+from .source import Source, TargetType
+from .source_resolver import SourceResolver, FilesScanner
 
-supported_extensions = ['json', 'yaml', 'ini', 'cfg', 'env']
+supported_extensions = ['json', 'yaml', 'yml', 'ini', 'cfg', 'env']
 applicant_files = ['config', 'conf', 'setting', 'settings', 'configuration']
 
 

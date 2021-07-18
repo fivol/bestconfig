@@ -1,8 +1,8 @@
 from warnings import warn
 import inspect
-from bestconfig.converters import *
-from bestconfig.source_resolver import SourceResolver, FilesScanner
-from bestconfig.source import TargetType
+from .converters import *
+from .source_resolver import SourceResolver, FilesScanner
+from .source import TargetType
 
 """Тип, которым может быть значение конфига"""
 ConfigType = t.Union[str, int, float, bool, dict, list]

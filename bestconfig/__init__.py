@@ -1,4 +1,4 @@
-from bestconfig.config import Config, Source
+from .config import Config, Source
 
 __all__ = [
     Config,
