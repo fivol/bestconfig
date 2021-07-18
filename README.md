@@ -3,7 +3,7 @@
 
 Этот модуль поможет сильно упростить использование конфигурационных
 файлов, вы предпочитаете хранить константы и 
-настройки в `.yaml`, `.json` или в переменных окружения?, 
+настройки в `.yaml`, `.json` или в переменных окружения?
 Это не важно, `bestconfig` учитывает множество вариантов
 и предоставляет очень удобный интерфейс доступа к данным
 ## Installation
@@ -159,7 +159,7 @@ config.assert_contains('key') # pass
 config.assert_contains('key1') # raise KeyError
 ```
 Бывает необходимо некоторым образом преобразовать 
-конфиги после импорта из файлов, тогда пригодится
+конфиги после импорта из файлов, тогда пригодится функция `update_from_locals()`
 ```python
 from bestconfig import Config
 
@@ -169,7 +169,7 @@ FULL_NAME = f'{config.name} {config.lastname}'
 
 config.update_from_locals()
 ```
-`locals()` то есть локальные при вызове этой функции станут доступны
+Она рассматривает словарь `locals()` (то есть локальные переменные) и добавляет в общую базу
 `config.get('FULL_NAME')`
 
 Также иногда бывает удобно, вместо `config.set('key', 'value')`
@@ -190,7 +190,7 @@ config.insert('other_file.yaml')
 ### Можете также посмотреть
 
 - [github](https://github.com/fivol/bestconfig)
-  Остальные ссылки доступны только с оттуда (не с [pypi.org](https://pypi.org/project/bestconfig/))
+  Ссылки ниже доступны только с гитхаба (не с [pypi.org](https://pypi.org/project/bestconfig/))
 - [Примеры использования](examples)
 - [Как запустить тесты](docs/TESTS.md)
 

@@ -48,7 +48,7 @@ class Config:
 
     @classmethod
     def _get_targets(cls, *args, exclude_default, exclude: list) -> t.List[TargetType]:
-        """Дополняет переданные пользователем источники (файлы) стандартными"""
+        """Дополняет переданные пользователем источники (файлы) стандартными путями"""
         exclude_set = set(exclude)
         targets = []
         if not exclude_default:
