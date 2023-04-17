@@ -13,6 +13,16 @@ def test_dotted_access():
     assert config.int('value.key.other') == 123
 
 
+def test_raises():
+    config = Config()
+    with pytest.raises(KeyError):
+        config.get('unknown', raise_absent=True)
+    try:
+        config["abc.unknown__"]
+    except KeyError as e:
+        assert "unknown__" in str(e)
+
+
 def test_config_in_files():
     config = Config()
     assert config.list_config == ['first', 'second', 'third']

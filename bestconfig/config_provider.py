@@ -64,7 +64,7 @@ class ConfigProvider(dict):
             return value
         except KeyError:
             if raise_absent:
-                raise KeyError
+                raise
 
         return default_value
 
@@ -176,10 +176,10 @@ class ConfigProvider(dict):
         value = self.to_dict()
         for key in keys:
             if not hasattr(value, '__getitem__'):
-                raise KeyError
+                raise KeyError(f'Key "{key}" not found on path "{item}"')
 
             if key not in value:
-                raise KeyError
+                raise KeyError(f'Key "{key}" not found on path "{item}"')
 
             value = value[key]
 
